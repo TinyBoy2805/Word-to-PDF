@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
-const { exec } = require("child_process");
+const libre = require("libreoffice-convert");
 const fs = require("fs");
 const path = require("path");
 
@@ -14,18 +14,23 @@ app.use(express.json());
 app.post("/upload", upload.single("file"), (req, res) => {
   if (!req.file) return res.status(400).send("Vui lòng tải lên file Word!");
 
-  const inputPath = path.resolve(req.file.path);
+  const inputPath = req.file.path;
   const outputPath = `${inputPath}.pdf`;
 
-  exec(`soffice --headless --convert-to pdf "${inputPath}" --outdir "uploads"`, (err) => {
-    if (err) return res.status(500).send("Lỗi khi chuyển đổi file!");
+  fs.readFile(inputPath, (err, data) => {
+    if (err) return res.status(500).send("Lỗi khi đọc file!");
 
-    res.download(outputPath, "converted.pdf", () => {
-      fs.unlinkSync(inputPath);
-      fs.unlinkSync(outputPath);
+    libre.convert(data, ".pdf", undefined, (err, converted) => {
+      if (err) return res.status(500).send("Lỗi khi chuyển đổi file!");
+
+      fs.writeFileSync(outputPath, converted);
+      res.download(outputPath, "converted.pdf", () => {
+        fs.unlinkSync(inputPath);
+        fs.unlinkSync(outputPath);
+      });
     });
   });
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Backend chạy tại http://localhost:${PORT}`));
