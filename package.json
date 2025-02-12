@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "start": "nodemon index.js",
-    "build": "apt-get update && apt-get install -y libreoffice && node index.js"
+    "build": "apt-get update && apt-get install -y libreoffice && node index.js",
+    "postinstall": "chmod +x build.sh"
   },
   "dependencies": {
     "child_process": "^1.0.2",
